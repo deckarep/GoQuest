@@ -50,6 +50,9 @@ func main() {
 
 	dungeonBoard := DungeonBytesToBoard(paddedDungeon)
 	PrintBoard(dungeonBoard)
+
+	bits := 3
+	fmt.Println(PadBits(8 - bits))
 }
 
 func TestConnection() {
@@ -89,6 +92,7 @@ func GetDungeon() []byte {
 
 func PadDungeon(dungeon []byte) []byte {
 
+	//TODO: fix board size, somehow we end up with a board that is 632 bits it should be 625 at the most.
 	dungeonSizeInBytes := int(math.Ceil(BOARDSIZE / 8.0))
 
 	paddedDungeon := make([]byte, dungeonSizeInBytes)
@@ -113,7 +117,7 @@ func DungeonBytesToBoard(bSlice []byte) string {
 
 	var buf bytes.Buffer
 
-	for _, b := range bSlice {
+	for i, b := range bSlice {
 
 		bitString := strconv.FormatInt(int64(b), 2)
 		buf.WriteString(PadBits(8-len(bitString)) + bitString)
