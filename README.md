@@ -1,6 +1,8 @@
 GoQuest
 =======
 
+# In Development, not ready.
+
 A simple room-based adventure game the world can play.
 
 GoQuest is based on old-school text adventure game ideals using new-school technologies.  Think of it as a fun game/experiment where anyone can play/contribute.  
