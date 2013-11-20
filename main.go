@@ -44,7 +44,6 @@ var pool = &redis.Pool{
 
 func main() {
 	defer un(trace("main()"))
-	fmt.Println("Welcome to GoQuest")
 
 	TestConnection()
 	ClearAllState()
