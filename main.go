@@ -21,6 +21,10 @@ var (
 	STARTINGROOMOFFSET = int(math.Ceil(BOARDSIZE / 2))
 )
 
+//TODO: create a command system that allows you to fire off a command either
+//		within a transaction as a MULTI EXEC
+//	    or singular as a Do()
+
 var pool = &redis.Pool{
 	MaxIdle:     3,
 	IdleTimeout: 240 * time.Second,
@@ -39,20 +43,30 @@ var pool = &redis.Pool{
 }
 
 func main() {
+	defer un(trace("main()"))
 	fmt.Println("Welcome to GoQuest")
 
 	TestConnection()
+	ClearAllState()
 
 	CreateEmptyDungeon()
+
 	b := GetDungeon()
 
 	paddedDungeon := PadDungeon(b)
 
 	dungeonBoard := DungeonBytesToBoard(paddedDungeon)
 	PrintBoard(dungeonBoard)
+}
 
-	bits := 3
-	fmt.Println(PadBits(8 - bits))
+func trace(s string) (string, time.Time) {
+	log.Println("START:", s)
+	return s, time.Now()
+}
+
+func un(s string, startTime time.Time) {
+	endTime := time.Now()
+	log.Println("  END:", s, "ElapsedTime in seconds:", endTime.Sub(startTime))
 }
 
 func TestConnection() {
@@ -66,16 +80,35 @@ func TestConnection() {
 	fmt.Println(x)
 }
 
-func CreateEmptyDungeon() {
-	log.Println("CreateEmptyDungeon()")
+func ClearAllState() {
+	log.Println("ClearAllState()")
+
+	conn := pool.Get()
+	conn.Send("MULTI")
+	conn.Send("DEL", "DUNGEON")
+	_, err := conn.Do("EXEC")
+	if err != nil {
+		log.Fatal("Couldn't clear all state")
+	}
+}
+
+func AddRoom(offset int) {
+	log.Println("AddRoom()")
 	//middle of the grid
 
 	conn := pool.Get()
-	_, err := conn.Do("SETBIT", "DUNGEON", STARTINGROOMOFFSET, 1)
+
+	_, err := conn.Do("SETBIT", "DUNGEON", offset, 1)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func CreateEmptyDungeon() {
+	log.Println("CreateEmptyDungeon()")
+
+	AddRoom(STARTINGROOMOFFSET)
 }
 
 func GetDungeon() []byte {
@@ -117,7 +150,7 @@ func DungeonBytesToBoard(bSlice []byte) string {
 
 	var buf bytes.Buffer
 
-	for i, b := range bSlice {
+	for _, b := range bSlice {
 
 		bitString := strconv.FormatInt(int64(b), 2)
 		buf.WriteString(PadBits(8-len(bitString)) + bitString)
@@ -129,6 +162,9 @@ func DungeonBytesToBoard(bSlice []byte) string {
 
 func PrintBoard(dungeon string) {
 	result := strings.Split(dungeon, "")
+
+	//truncate to max size of dungeon because of extra padding of bits remainder of byte at the end
+	result = result[0:BOARDSIZE]
 
 	fmt.Println("[" + strings.Join(result, ",") + "]")
 }
