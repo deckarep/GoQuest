@@ -20,7 +20,7 @@
 	$(function() {
 		
 		// create an new instance of a pixi stage
-		var stage = new PIXI.Stage(0xffffff);
+		var stage = new PIXI.Stage(0xffffff, true/*interactive is true*/);
 		
 		// create a renderer instance
 		//var renderer = PIXI.autoDetectRenderer(280, 280);
@@ -46,8 +46,11 @@
 				for(var y = 0; y < factor; y++){
 					// create a new Sprite using the texture
 					var bunny = new PIXI.Sprite(texture);
-					
-					var bit = dungeon[x+(y*factor)];
+					bunny.setInteractive(true);
+
+					var offset = x+(y*factor);
+					bunny.dungeonOffset = offset;
+					var bit = dungeon[offset];
 
 					if( bit > 0){
 						bunny.alpha = 1;
@@ -57,8 +60,10 @@
 
 					bunny.position.x = x * tileSpacing;
 					bunny.position.y = y * tileSpacing;
-					
 					bunny.height = bunny.width = tileSize;
+					bunny.click = function(interactionData){
+						console.log(interactionData.target.dungeonOffset);
+					};
 					
 					stage.addChild(bunny);
 				}
