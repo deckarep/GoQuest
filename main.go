@@ -23,9 +23,14 @@ var (
 	STARTINGROOMOFFSET = int(math.Ceil(BOARDSIZE / 2))
 )
 
-//TODO: create a command system that allows you to fire off a command either
-//		within a transaction as a MULTI EXEC
-//	    or singular as a Do()
+/*
+	TODO:
+		create a command system that allows you to fire off a command either
+		within a transaction as a MULTI EXEC or singular as a Do()
+
+		consider: dungeon tiles can be user gravatar, it is their home
+
+*/
 
 var pool = &redis.Pool{
 	MaxIdle:     3,
@@ -49,31 +54,32 @@ type State struct {
 }
 
 func main() {
-	defer un(trace("main()"))
 
 	/*
 		REMEMBER: ULTIMATE GOAL
 		ABSOLUTELY NO STATE IN WEBSERVER...should all be in REDIS!!!!!!!
 	*/
 
+	//Sanity check on connection
 	TestConnection()
-	ClearAllState()
 
-	CreateEmptyDungeon()
+	initDungeon()
 
-	b := GetDungeon()
-
-	paddedDungeon := PadDungeon(b)
-
-	dungeonBoard := DungeonBytesToBoard(paddedDungeon)
-	PrintBoard(dungeonBoard)
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/state", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, GetDungeonJSON())
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func initDungeon() {
+	defer un(trace("initDungeon()"))
+	ClearAllState()
+	CreateEmptyDungeon()
+	AddRoom(0)
+	AddRoom(1)
+	AddRoom(2)
 }
 
 func trace(s string) (string, time.Time) {
@@ -109,6 +115,7 @@ func ClearAllState() {
 	conn.Send("MULTI")
 	conn.Send("DEL", "DUNGEON")
 	_, err := conn.Do("EXEC")
+
 	if err != nil {
 		log.Fatal("Couldn't clear all state")
 	}
@@ -195,6 +202,8 @@ func PrintBoard(dungeon string) {
 }
 
 func GetDungeonJSON() string {
+	defer un(trace("GetDungeonJSON"))
+
 	b := GetDungeon()
 	pd := PadDungeon(b)
 	dungeon := DungeonBytesToBoard(pd)

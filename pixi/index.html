@@ -23,7 +23,8 @@
 		var stage = new PIXI.Stage(0xffffff);
 		
 		// create a renderer instance
-		var renderer = PIXI.autoDetectRenderer(280, 280);
+		//var renderer = PIXI.autoDetectRenderer(280, 280);
+		var renderer = PIXI.autoDetectRenderer(400, 400);
 		
 		// add the renderer view element to the DOM
 		document.body.appendChild(renderer.view);
@@ -35,29 +36,29 @@
 		
 		
 
-		$.get('http://localhost:8080/', function(data){
+		$.get('http://localhost:8080/state', function(data){
 			var dungeon = data.Dungeon;
 			var factor = Math.sqrt(dungeon.length);
+			var tileSize = 14; //png native size is only 10
+			var tileSpacing = tileSize + 1;
 
 			for(var x = 0; x < factor; x++){
 				for(var y = 0; y < factor; y++){
 					// create a new Sprite using the texture
 					var bunny = new PIXI.Sprite(texture);
 					
-					// center the sprites anchor point
-					//bunny.anchor.x = 0.5;
-					//bunny.anchor.y = 0.5;
-					var bit = dungeon[x+(y*25)];
+					var bit = dungeon[x+(y*factor)];
 
-					//if(x == middle && y == middle){
 					if( bit > 0){
 						bunny.alpha = 1;
 					}else{
 						bunny.alpha = 0.5;
 					}
-					// move the sprite t the center of the screen
-					bunny.position.x = x * 11;
-					bunny.position.y = y * 11;
+
+					bunny.position.x = x * tileSpacing;
+					bunny.position.y = y * tileSpacing;
+					
+					bunny.height = bunny.width = tileSize;
 					
 					stage.addChild(bunny);
 				}
