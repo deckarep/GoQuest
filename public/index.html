@@ -62,6 +62,10 @@
 					dungeonTile.click = function(interactionData){
 						var t = interactionData.target;
 						t.alpha = 1.0;
+
+						$.get('/add/' + t.dungeonOffset, function(data){
+							//do something with data
+						});
 					};
 					
 					stage.addChild(dungeonTile);

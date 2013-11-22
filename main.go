@@ -59,6 +59,11 @@ type State struct {
 }
 
 func main() {
+
+	TestRTran()
+
+	return
+
 	m := martini.Classic()
 
 	/*
@@ -77,7 +82,7 @@ func main() {
 			fmt.Fprintf(w, GetDungeonJSON())
 		})
 	*/
-	m.Get("/info", func(w http.ResponseWriter, req *http.Request) {
+	m.Get("/debug", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, req.RemoteAddr)
 		fmt.Fprintln(w, req.URL)
 		fmt.Fprintln(w, req.Host)
@@ -88,13 +93,35 @@ func main() {
 		return GetDungeonJSON()
 	})
 
+	m.Get("/add/:room", func(params martini.Params, w http.ResponseWriter, req *http.Request) string {
+		w.Header().Set("Content-Type", "application/json")
+
+		//TODO:validate input that it is a number in proper range
+		v := params["room"]
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			log.Println("Could not get room number")
+			return "\"{\"err\":\"Could not parse room number\"}\""
+		}
+
+		AddRoom(i)
+		return GetDungeonJSON()
+	})
+
+	m.Get("/clearall", func(w http.ResponseWriter, req *http.Request) string {
+		w.Header().Set("Content-Type", "application/json")
+
+		ClearAllState()
+		return GetDungeonJSON()
+	})
+
 	m.Run()
 }
 
 func initDungeon() {
 	defer un(trace("initDungeon()"))
-	ClearAllState()
-	CreateEmptyDungeon()
+	//ClearAllState()
+	//CreateEmptyDungeon()
 	AddRoom(0)
 	AddRoom(1)
 	AddRoom(2)
@@ -122,6 +149,26 @@ func TestConnection() {
 	}
 	fmt.Println("Success!")
 	fmt.Println(x)
+}
+
+func TestRTran() {
+	RTran(func(conn redis.Conn) {
+		conn.Send("INCR", "Bobby")
+		conn.Send("DECR", "Bobby")
+	})
+}
+
+//Trying to come up with a transaction context manager for Redigo
+func RTran(cb func(conn redis.Conn)) {
+	conn := pool.Get()
+	defer conn.Close()
+	conn.Send("MULTI")
+	cb(conn)
+	_, err := conn.Do("EXEC")
+	if err != nil {
+		log.Println("Transaction failed!")
+		log.Fatal(err)
+	}
 }
 
 func ClearAllState() {
