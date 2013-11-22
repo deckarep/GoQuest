@@ -155,6 +155,17 @@ func TestRTran() {
 	RTran(func(conn redis.Conn) {
 		conn.Send("INCR", "Bobby")
 		conn.Send("DECR", "Bobby")
+		conn.Send("INCR", "Bobby")
+		conn.Send("DECR", "Bobby")
+		conn.Send("INCR", "Bobby")
+		conn.Send("DECR", "Bobby")
+		conn.Send("INCR", "Bobby")
+		conn.Send("DECR", "Bobby")
+		conn.Send("INCR", "Bobby")
+		conn.Send("DECR", "Bobby")
+		conn.Send("INCR", "Bobby")
+		conn.Send("DECR", "Bobby")
+		conn.Send("INCRs", "Bobby")
 	})
 }
 
