@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/codegangsta/martini"
 	"github.com/garyburd/redigo/redis"
 	"log"
 	"math"
@@ -30,6 +31,10 @@ var (
 
 		consider: dungeon tiles can be user gravatar, it is their home
 
+		interesting: we can simulate virtual host by using the xip.io service and based on
+		a subdomain like: dungeon.127.0.0.1.xip.io:3000 we can observe in the handler the
+		subdomain part.
+
 */
 
 var pool = &redis.Pool{
@@ -54,6 +59,7 @@ type State struct {
 }
 
 func main() {
+	m := martini.Classic()
 
 	/*
 		REMEMBER: ULTIMATE GOAL
@@ -62,15 +68,27 @@ func main() {
 
 	//Sanity check on connection
 	TestConnection()
-
 	initDungeon()
 
-	http.HandleFunc("/state", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, GetDungeonJSON())
+	/*
+		//serve app state
+		http.HandleFunc("/state", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintf(w, GetDungeonJSON())
+		})
+	*/
+	m.Get("/info", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, req.RemoteAddr)
+		fmt.Fprintln(w, req.URL)
+		fmt.Fprintln(w, req.Host)
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	m.Get("/state", func(w http.ResponseWriter, req *http.Request) string {
+		w.Header().Set("Content-Type", "application/json")
+		return GetDungeonJSON()
+	})
+
+	m.Run()
 }
 
 func initDungeon() {

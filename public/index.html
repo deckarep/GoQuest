@@ -33,10 +33,8 @@
 		
 		// create a texture from an image path
 		var texture = PIXI.Texture.fromImage("bunny.png");
-		
-		
 
-		$.get('http://localhost:8080/state', function(data){
+		$.get('/state', function(data){
 			var dungeon = data.Dungeon;
 			var factor = Math.sqrt(dungeon.length);
 			var tileSize = 14; //png native size is only 10
@@ -45,27 +43,28 @@
 			for(var x = 0; x < factor; x++){
 				for(var y = 0; y < factor; y++){
 					// create a new Sprite using the texture
-					var bunny = new PIXI.Sprite(texture);
-					bunny.setInteractive(true);
+					var dungeonTile = new PIXI.Sprite(texture);
+					dungeonTile.setInteractive(true);
 
 					var offset = x+(y*factor);
-					bunny.dungeonOffset = offset;
+					dungeonTile.dungeonOffset = offset;
 					var bit = dungeon[offset];
 
 					if( bit > 0){
-						bunny.alpha = 1;
+						dungeonTile.alpha = 1;
 					}else{
-						bunny.alpha = 0.5;
+						dungeonTile.alpha = 0.5;
 					}
 
-					bunny.position.x = x * tileSpacing;
-					bunny.position.y = y * tileSpacing;
-					bunny.height = bunny.width = tileSize;
-					bunny.click = function(interactionData){
-						console.log(interactionData.target.dungeonOffset);
+					dungeonTile.position.x = x * tileSpacing;
+					dungeonTile.position.y = y * tileSpacing;
+					dungeonTile.height = dungeonTile.width = tileSize;
+					dungeonTile.click = function(interactionData){
+						var t = interactionData.target;
+						t.alpha = 1.0;
 					};
 					
-					stage.addChild(bunny);
+					stage.addChild(dungeonTile);
 				}
 			}
 		});
